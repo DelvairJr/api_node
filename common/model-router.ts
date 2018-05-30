@@ -5,7 +5,7 @@ import { NotFoundError } from "restify-errors"
 export abstract class ModelRouter<D extends mongoose.Document> extends Router {
 
     basePath: string
-    pageSize: number = 3
+    pageSize: number = 2
     constructor(protected model: mongoose.Model<D>) {
         super()
         this.basePath = `/${model.collection.name}`
@@ -24,15 +24,20 @@ export abstract class ModelRouter<D extends mongoose.Document> extends Router {
     envelopeAll(documents: any[], options: any = {}): any {
         const resource: any = {
             _links: {
-                self: ``
+                self: `${options.url}`
             },
             items: documents
         }
-        if (options.page) {
+        if (options.page && options.count && options.pageSize) {
             if (options.page > 1) {
                 resource._links.previous = `${this.basePath}?_page=${options.page - 1}`
             }
-            resource._links.next = `${this.basePath}?_page=${options.page + 1}`
+
+            const remainig = options.count - (options.page * options.pageSize)
+            if (remainig > 0) {
+                resource._links.next = `${this.basePath}?_page=${options.page + 1}`
+            }
+
         }
         return resource
     }
@@ -46,17 +51,23 @@ export abstract class ModelRouter<D extends mongoose.Document> extends Router {
     }
 
     findAll = (req, resp, next) => {
-        let page = parseInt(req.query_page || 1)
+        let page = parseInt(req.query._page || 1)
         page = page > 0 ? page : 1
 
         const skip = (page - 1) * this.pageSize
 
-        this.model.find()
-            .limit(this.pageSize)
-            .skip(skip)
-            .then(this.renderAll(resp, next, { page }))
+        this.model
+            .count({}).exec()
+            .then(count => this.model.find()
+                .skip(skip)
+                .limit(this.pageSize)
+                .then(this.renderAll(resp, next, {
+                    page, count, pageSize: this.pageSize, url: req.url
+                })))
             .catch(next)
     }
+
+
 
     findById = (req, resp, next) => {
         this.prepareOne(this.model.findById(req.params.id))
