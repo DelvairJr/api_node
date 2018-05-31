@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "ts-node jest.startup.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "jest": {
+    "globals":{
+      "address":"http://localhost:3001"
+    },
     "testEnvironment": "node",
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
