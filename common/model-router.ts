@@ -1,11 +1,14 @@
-import { Router } from "./router"
+import { Router } from './router'
 import * as mongoose from 'mongoose'
-import { NotFoundError } from "restify-errors"
+import { NotFoundError } from 'restify-errors'
+
 
 export abstract class ModelRouter<D extends mongoose.Document> extends Router {
 
     basePath: string
+
     pageSize: number = 2
+
     constructor(protected model: mongoose.Model<D>) {
         super()
         this.basePath = `/${model.collection.name}`
@@ -32,12 +35,10 @@ export abstract class ModelRouter<D extends mongoose.Document> extends Router {
             if (options.page > 1) {
                 resource._links.previous = `${this.basePath}?_page=${options.page - 1}`
             }
-
-            const remainig = options.count - (options.page * options.pageSize)
-            if (remainig > 0) {
+            const remaining = options.count - (options.page * options.pageSize)
+            if (remaining > 0) {
                 resource._links.next = `${this.basePath}?_page=${options.page + 1}`
             }
-
         }
         return resource
     }
@@ -67,8 +68,6 @@ export abstract class ModelRouter<D extends mongoose.Document> extends Router {
             .catch(next)
     }
 
-
-
     findById = (req, resp, next) => {
         this.prepareOne(this.model.findById(req.params.id))
             .then(this.render(resp, next))
@@ -83,11 +82,11 @@ export abstract class ModelRouter<D extends mongoose.Document> extends Router {
     }
 
     replace = (req, resp, next) => {
-        const options = { runValidatiors: true, overwrite: true }
+        const options = { runValidators: true, overwrite: true }
         this.model.update({ _id: req.params.id }, req.body, options)
             .exec().then(result => {
                 if (result.n) {
-                    return this.model.findById(req.params.id)
+                    return this.prepareOne(this.model.findById(req.params.id))
                 } else {
                     throw new NotFoundError('Documento não encontrado')
                 }
@@ -96,7 +95,7 @@ export abstract class ModelRouter<D extends mongoose.Document> extends Router {
     }
 
     update = (req, resp, next) => {
-        const options = { runValidatiors: true, new: true }
+        const options = { runValidators: true, new: true }
         this.model.findByIdAndUpdate(req.params.id, req.body, options)
             .then(this.render(resp, next))
             .catch(next)

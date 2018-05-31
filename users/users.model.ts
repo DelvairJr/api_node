@@ -6,9 +6,7 @@ import { environment } from "./../common/evironment";
 export interface User extends mongoose.Document {
     name: string,
     email: string,
-    password: string,
-    maxlength: 80,
-    minlength: 3
+    password: string
 }
 
 export interface UserModel extends mongoose.Model<User> {
@@ -18,7 +16,9 @@ export interface UserModel extends mongoose.Model<User> {
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        maxlength: 80,
+        minlength: 3
     },
     email: {
         type: String,
@@ -42,8 +42,8 @@ const userSchema = new mongoose.Schema({
 
 })
 
-userSchema.statics.findByEmail = function (email: String) {
-    return this.findOnde({ email })
+userSchema.statics.findByEmail = function (email: string) {
+    return this.findOne({ email }) //{email: email}
 }
 
 const hashPassword = (obj, next) => {
@@ -72,7 +72,7 @@ const updateMiddleware = function (next) {
 }
 
 userSchema.pre('save', saveMiddleware)
-userSchema.pre('findOneAndUpdate', hashPassword)
+userSchema.pre('findOneAndUpdate', updateMiddleware)
 userSchema.pre('update', updateMiddleware)
 
-export const User = mongoose.model<User,UserModel>('User', userSchema)
+export const User = mongoose.model<User, UserModel>('User', userSchema)
