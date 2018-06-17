@@ -1,6 +1,6 @@
 import { Server } from './Server/server'
 import { usersRouter } from './users/users.router'
-import { restaurantRouter } from "./restaurants/restaurant.router";
+import { restaurantRouter } from './restaurants/restaurants.router'
 import { reviewsRouters } from './reviews/reviews.router';
 
 const server = new Server()
